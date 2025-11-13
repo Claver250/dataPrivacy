@@ -16,7 +16,8 @@ exports.createRequest = async (req, res) => {
         requestType,
         details,
         submittedAt: new Date(),
-        status: 'pending'
+        status: 'pending',
+        correctionData: correctionData || null,
     });
 
     console.log(`[Request Created]  ${requestType.toUpperCase()} request for ${app}`);
@@ -55,6 +56,24 @@ exports.getUserRequests = async (req, res) => {
     }
 };
 
+exports.getAllRequests = async (req, res) => {
+    try{
+        const requests = await Request.findAll({
+            include: [{ 
+                model: User, as: 'user', 
+                attributes: ['name', 'email']}],
+            order: [['submittedAt', 'DESC']],
+        });
+
+        res.json({success: true, requests})
+    }catch(error){
+        console.error(error);
+        res.status(500).json({
+            success: false, 
+            message: 'Internal server error'});
+    }
+};
+
 exports.updateRequestStatus = async (req, res) => {
     try{
         const {id}= req.params;
@@ -68,6 +87,29 @@ exports.updateRequestStatus = async (req, res) => {
         request.status = status;
         await request.save();
 
+        if (status === 'approved') {
+            const user = await User.findByPk(request.userId);
+
+            switch (request.requestType) {
+                case 'DATA ACCESS':
+                    return res.status(200).json({ success: true, message: 'Request approved', data: user});
+                case 'DATA DELETION':
+                    await user.destroy();
+                    return res.status(200).json({ success: true, message: 'User data deleted successfully'});
+                case 'DATA CORRECTION':
+                    if (!request.correctionData) {
+                        return res.status(400).json({success: false, message: 'No correction data provided'});
+                    }
+
+                    await user.update(request.correctionData);
+                    return res.status(200).json({
+                        success: true,
+                        message: 'User data corrected successfully',
+                        data: user
+                    });
+            }
+        }
+
         console.log(`[Request Updated] ID: ${id}, Status: ${status.toUpperCase()}`);
 
         res.json({
@@ -80,5 +122,21 @@ exports.updateRequestStatus = async (req, res) => {
             success: false,
             message: 'Internal server error'
         })
+    }
+};
+
+exports.deleteRequest = async (req, res) => {
+    try{
+        const {id} = req.params;
+        const request = await Request.findByPk(id);
+
+        if(!request) return res.status(404).json({success: false, message: 'Request not found'});
+
+        await request.destroy();
+        res.status(200).json({ success: false, message: 'Request deleted successfully' })
+    }
+    catch(error){
+        console.error(error);
+        res.status(500).json({success: false, message: 'Server Error'})
     }
 };

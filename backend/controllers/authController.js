@@ -2,7 +2,9 @@ const { User, Provider, Connection, Consent} = require('../model');
 const {hashPassword, comparePassword} = require('../utils/bcrypt');
 const {userSchema, loginSchema} = require('../validators/userValidate');
 const { generateToken } = require('../utils/token');
+const { OAuth2Client } = require('google-auth-library');
 
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 exports.register = async (req, res) => {
     try {
@@ -85,5 +87,52 @@ exports.loginUser = async (req, res) => {
         });
     } catch(err){
         res.status(500).json({error: err.message});      
+    }
+};
+
+exports.googleLogin = async (req, res) => {
+    try{
+        const { token } = req.body;
+
+        const ticket = await googleClient.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const payLoad = ticket.getPayload();
+        const { email, name, sub: googleId } = payLoad
+
+        let user = await User.findOne({ where: { email }});
+        // If user exists but was registered manually, link Google
+        if (user && !user.googleId) {
+            user.googleId = googleId;
+            user.authProvider = 'google';
+            await user.save();
+        }
+
+        if (!user) {
+            user = await User.create({
+                name,
+                email,
+                googleId,
+                password: null,
+                role: 'user',
+                authProvider: 'google'
+            });
+        }
+
+        const jwtToken = generateToken(user);
+
+        res.status(200).json({
+            message: 'Google login successful',
+            token: jwtToken,
+            user: { id: user.id, 
+                name: user.name, 
+                email: user.email, 
+                authProvider: user.authProvider,
+            },
+        });
+    }catch(err){
+        res.status(500).json({ error: err.message });
     }
 };

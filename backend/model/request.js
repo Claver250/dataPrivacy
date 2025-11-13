@@ -36,6 +36,10 @@ const Request =sequelize.define ('Request', {
         type: DataTypes.TEXT,
         defaultValue: 'PENDING'
     },
+    correctionData: {
+        type: DataTypes.JSON,
+        allowNull: true,
+    },
     submittedAt: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,

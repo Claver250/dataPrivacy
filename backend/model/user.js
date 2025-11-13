@@ -26,6 +26,26 @@ const User =sequelize.define ('User', {
         allowNull: false,
         defaultValue: 'user'
     },
+    googleId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    authProvider: {
+        type: DataTypes.ENUM('manual', 'google'),
+        defaultValue: 'manual'
+    },
+    googleAccessToken: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+    },
+    googleRefreshToken: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+    },
+    tokenExpiry: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    },
     role: {
         type: DataTypes.STRING,
         allowNull: true,
