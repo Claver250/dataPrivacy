@@ -3,6 +3,7 @@ const {hashPassword, comparePassword} = require('../utils/bcrypt');
 const {userSchema, loginSchema} = require('../validators/userValidate');
 const { generateToken } = require('../utils/token');
 const { OAuth2Client } = require('google-auth-library');
+const passport = require('passport');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -136,3 +137,7 @@ exports.googleLogin = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.logout = async (req, res) => {
+    res.json({ success: true, message: "Logged out successfully"});
+}
