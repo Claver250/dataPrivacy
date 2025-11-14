@@ -10,11 +10,13 @@ app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:3000' }));
 
 
 // Routes
-app.use('/api/auth', require('./src/routes/authRoutes'));
-app.use('/api/consent', require('./src/routes/consentRoutes'));
-app.use('/api/ledger', require('./src/routes/ledgerRoutes'));
-app.use('/api/compliance', require('./src/routes/complianceRoutes'));
-app.use('/api/request', require('./src/routes/requestRoutes'));
+app.use('/api/auth', require('./backend/routes/authRoutes'));
+app.use('/api/consent', require('./backend/routes/consentRoutes'));
+app.use('/api/connection', require('./backend/routes/connectionRoutes'));
+app.use('/api/provider', require('./backend/routes/providerRoutes'));
+app.use('/api/ledger', require('./backend/routes/ledgerRoutes'));
+app.use('/api/compliance', require('./backend/routes/complianceRoutes'));
+app.use('/api/request', require('./backend/routes/requestRoutes'));
 
 app.get('/', (req, res) => res.send({ ok: true, message: 'MyDataHub backend running' }));
 
